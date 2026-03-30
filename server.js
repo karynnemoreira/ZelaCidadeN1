@@ -1,9 +1,15 @@
-//Importações
+//Importando
 
 const express = require("express"); //Framework que cria o servidor e as rotas
 const { criarBanco } = require("./database"); //A chave que vai abrir a conexão com o banco de dados
 
+const cors = require("cors"); //importando o pacote que gerencia as permissões de acesso
+
 const app = express(); //Inicialização: Ligando o motor do servidor
+
+//------Ativando
+
+app.use(cors()); //Ativando o CORS no servidor
 
 app.use(express.json()); //Tradutor: Configura o Express para entender dados enviados no formato JSON
 
@@ -19,15 +25,6 @@ app.get("/", (req, res) => {
         </body>
         
         `);
-});
-
-//Porta do servidor
-
-const PORT = 3000;
-
-//Ligando o Servidor
-app.listen(PORT, () => {
-  console.log(`Servidor rodando em http://localhost:${PORT}`);
 });
 
 //Rota de Listagem - Para buscar todos os problemas registrados
@@ -97,37 +94,48 @@ app.put("/incidentes/:id", async (req, res) => {
   const { id } = req.params;
 
   //Pega os novos dados enviados no corpo da requisição (O que será atualizado)
-  const {descricao, prioridade, status_resolucao} = req.body;
+  const { descricao, prioridade, status_resolucao } = req.body;
 
   //Abre a conexão com o banco de dados
   const db = await criarBanco();
 
-  await db.run(`
+  await db.run(
+    `
     UPDATE incidentes 
     SET descricao = ?, prioridade = ?, status_resolucao = ? 
-    WHERE id = ?`, [descricao, prioridade, status_resolucao, id]
-    )
+    WHERE id = ?`,
+    [descricao, prioridade, status_resolucao, id],
+  );
 
-    //Enviar uma resposta para o cliente 
-    res.send(` O incidente de ${id} foi atualizada com sucesso `)
-
+  //Enviar uma resposta para o cliente
+  res.send(` O incidente de ${id} foi atualizada com sucesso `);
 });
 
-
-//Rota de remoção 
+//Rota de remoção
 
 app.delete("/incidentes/:id", async (req, res) => {
-
   //Pega o ID do incidente que vem pela a URL (ex: /incidentes/4)
-  const {id} = req.params; 
+  const { id } = req.params;
 
   //Abre a conexão com o banco de dados
-  const db = await criarBanco()
+  const db = await criarBanco();
 
-  await db.run(`
+  await db.run(
+    `
     DELETE FROM incidentes WHERE id = ?
-    `, [id])
+    `,
+    [id],
+  );
 
-    res.send(`O incidente de ${id} foi removido com sucesso`)
+  res.send(`O incidente de ${id} foi removido com sucesso`);
+});
 
-})
+//Porta do servidor
+
+//Criando uma variável inteligente para a porta
+const PORT = process.env.PORT || 3000;
+
+//Ligando o Servidor
+app.listen(PORT, () => {
+  console.log(`Servidor rodando em http://localhost:${PORT}`);
+});
